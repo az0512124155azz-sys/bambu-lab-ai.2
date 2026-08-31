@@ -1,0 +1,26 @@
+name: Build Bambu Studio AI for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'deps/**'
+      - 'resources/**'
+      - 'bbl/**'
+      - '**/CMakeLists.txt'
+      - 'version.inc'
+      - '.github/workflows/build-ai-windows-exe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    uses: ./.github/workflows/build_check_cache.yml
+    with:
+      os: windows-latest
+      arch: x86_64
+      build-deps-only: false
+    secrets: inherit
