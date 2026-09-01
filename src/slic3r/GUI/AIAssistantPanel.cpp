@@ -527,7 +527,7 @@ void AIAssistantPanel::send_provider_request(const wxString& prompt)
         Slic3r::Http http = Slic3r::Http::post(url);
         http.header("Content-Type", "application/json").timeout_max(120).set_post_body(body.dump());
         if (!ollama && !key.empty()) http.header("Authorization", "Bearer " + key);
-        http.on_complete([&response](std::string data, unsigned status) {
+        http.on_complete([&response, &failure](std::string data, unsigned status) {
                 if (status >= 200 && status < 300) response = std::move(data);
                 else failure = "HTTP " + std::to_string(status) + " " + data;
             })
