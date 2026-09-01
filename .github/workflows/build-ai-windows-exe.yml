@@ -12,6 +12,7 @@ on:
       - '**/CMakeLists.txt'
       - 'version.inc'
       - '.github/workflows/build-ai-windows-exe.yml'
+      - '.github/workflows/build_bambu.yml'
 
 permissions:
   contents: read
