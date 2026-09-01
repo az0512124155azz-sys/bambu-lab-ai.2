@@ -299,6 +299,7 @@ public:
     //BBS
     void        show_log_window();
     void        toggle_ai_assistant();
+    void        show_ai_terminal();
 
     void        update_ui_from_settings();
     //BBS
