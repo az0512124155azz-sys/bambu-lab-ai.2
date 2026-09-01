@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Bambu Studio AI">
+  <defs>
+    <linearGradient id="g" x1="72" y1="64" x2="440" y2="448" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67E8C1"/>
+      <stop offset="1" stop-color="#16A574"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#14232D"/>
+  <path d="M256 74 418 168v176L256 438 94 344V168L256 74Z" fill="none" stroke="url(#g)" stroke-width="34" stroke-linejoin="round"/>
+  <path d="m174 346 82-192 82 192m-132-72h100" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="394" cy="118" r="38" fill="#67E8C1"/>
+  <path d="M394 94v48M370 118h48" stroke="#14232D" stroke-width="12" stroke-linecap="round"/>
+</svg>
