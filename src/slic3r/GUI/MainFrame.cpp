@@ -322,13 +322,16 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     else
         init_menubar_as_editor();
 
-    // Bambu Studio AI: an isolated side tool window, toggled with Ctrl+Shift+Z.
-    // It deliberately does not replace the slicer's existing undo/redo bindings.
+    // Bambu Studio AI shortcuts. Ctrl+Shift+Z opens the assistant and
+    // Ctrl+Shift+A opens the safe modeling/settings terminal.
     constexpr int ai_assistant_menu_id = wxID_HIGHEST + 4901;
-    wxAcceleratorEntry ai_entry;
-    ai_entry.Set(wxACCEL_CTRL | wxACCEL_SHIFT, static_cast<int>('Z'), ai_assistant_menu_id);
-    SetAcceleratorTable(wxAcceleratorTable(1, &ai_entry));
+    constexpr int ai_terminal_menu_id  = wxID_HIGHEST + 4902;
+    wxAcceleratorEntry ai_entries[2];
+    ai_entries[0].Set(wxACCEL_CTRL | wxACCEL_SHIFT, static_cast<int>('Z'), ai_assistant_menu_id);
+    ai_entries[1].Set(wxACCEL_CTRL | wxACCEL_SHIFT, static_cast<int>('A'), ai_terminal_menu_id);
+    SetAcceleratorTable(wxAcceleratorTable(2, ai_entries));
     Bind(wxEVT_MENU, [this](wxCommandEvent&) { toggle_ai_assistant(); }, ai_assistant_menu_id);
+    Bind(wxEVT_MENU, [this](wxCommandEvent&) { show_ai_terminal(); }, ai_terminal_menu_id);
 
     // BBS
 #if 0
@@ -988,6 +991,13 @@ void MainFrame::toggle_ai_assistant()
     if (m_ai_assistant == nullptr)
         m_ai_assistant = new AIAssistantPanel(this);
     m_ai_assistant->toggle();
+}
+
+void MainFrame::show_ai_terminal()
+{
+    if (m_ai_assistant == nullptr)
+        m_ai_assistant = new AIAssistantPanel(this);
+    m_ai_assistant->show_terminal();
 }
 
 void MainFrame::update_layout()
@@ -3586,6 +3596,10 @@ void MainFrame::init_menubar_as_editor()
     append_menu_item(
         m_topbar->GetTopMenu(), wxID_ANY, _L("AI Assistant") + "\tCtrl+Shift+Z", "",
         [this](wxCommandEvent&) { toggle_ai_assistant(); },
+        "", nullptr, []() { return true; }, this);
+    append_menu_item(
+        m_topbar->GetTopMenu(), wxID_ANY, _L("AI Terminal") + "\tCtrl+Shift+A", "",
+        [this](wxCommandEvent&) { show_ai_terminal(); },
         "", nullptr, []() { return true; }, this);
     //m_topbar->AddDropDownMenuItem(preference_item);
     //m_topbar->AddDropDownMenuItem(printer_item);
