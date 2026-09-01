@@ -1,7 +1,7 @@
 #ifndef slic3r_AIAssistantPanel_hpp_
 #define slic3r_AIAssistantPanel_hpp_
 
-#include <wx/frame.h>
+#include <wx/panel.h>
 #include <wx/string.h>
 #include <array>
 #include <vector>
@@ -18,12 +18,13 @@ namespace Slic3r::GUI {
 
 class MainFrame;
 
-class AIAssistantPanel final : public wxFrame
+class AIAssistantPanel final : public wxPanel
 {
 public:
     explicit AIAssistantPanel(MainFrame* owner);
     void toggle();
     void show_terminal();
+    void layout_docked_panels();
 
     struct Triangle {
         std::array<double, 3> a;
@@ -55,6 +56,7 @@ private:
 
     MainFrame*            m_owner {nullptr};
     wxNotebook*           m_tabs {nullptr};
+    wxPanel*              m_terminal_panel {nullptr};
     wxChoice*             m_provider {nullptr};
     wxTextCtrl*           m_endpoint {nullptr};
     wxTextCtrl*           m_model {nullptr};
