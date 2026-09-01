@@ -15,6 +15,7 @@
 #include <wx/msgdlg.h>
 #include <wx/notebook.h>
 #include <wx/panel.h>
+#include <wx/scrolwin.h>
 #include <wx/sizer.h>
 #include <wx/statbmp.h>
 #include <wx/stattext.h>
@@ -180,38 +181,60 @@ void add_sphere(std::vector<AIAssistantPanel::Triangle>& out, double radius, int
 }
 
 AIAssistantPanel::AIAssistantPanel(MainFrame* owner)
-    : wxFrame(owner, wxID_ANY, "Bambu Studio AI", wxDefaultPosition, wxSize(520, 820),
-              wxFRAME_TOOL_WINDOW | wxCAPTION | wxCLOSE_BOX | wxRESIZE_BORDER),
+    : wxPanel(owner, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE),
       m_owner(owner)
 {
     build_ui();
     load_settings();
     detect_mcp_config(false);
     detect_local_ollama();
-    Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& event) {
-        save_settings();
-        Hide();
-        event.Veto();
-    });
+    Hide();
+    if (m_terminal_panel) m_terminal_panel->Hide();
 }
 
 void AIAssistantPanel::toggle()
 {
-    if (IsShown()) { Hide(); return; }
-    const wxRect owner = m_owner->GetScreenRect();
-    const wxSize size = GetSize();
-    SetPosition({owner.GetRight() - size.GetWidth(), owner.GetTop() + 42});
+    if (IsShown()) {
+        save_settings();
+        Hide();
+        return;
+    }
     Show();
+    layout_docked_panels();
     Raise();
     m_prompt->SetFocus();
 }
 
 void AIAssistantPanel::show_terminal()
 {
-    if (!IsShown()) toggle();
-    m_tabs->SetSelection(1);
-    Raise();
+    if (!m_terminal_panel) return;
+    if (m_terminal_panel->IsShown()) {
+        m_terminal_panel->Hide();
+        return;
+    }
+    m_terminal_panel->Show();
+    layout_docked_panels();
+    m_terminal_panel->Raise();
     m_terminal_input->SetFocus();
+}
+
+void AIAssistantPanel::layout_docked_panels()
+{
+    if (!m_owner) return;
+    const wxSize client = m_owner->GetClientSize();
+    const int top = m_owner->topbar() ? m_owner->topbar()->GetSize().GetHeight() : 0;
+    const int sidebar_width = std::clamp(client.GetWidth() / 3, 390, 520);
+    const int terminal_height = std::clamp(client.GetHeight() / 3, 220, 340);
+
+    if (IsShown())
+        SetSize(0, top, sidebar_width, std::max(120, client.GetHeight() - top));
+
+    if (m_terminal_panel && m_terminal_panel->IsShown()) {
+        const int left = IsShown() ? sidebar_width : 0;
+        m_terminal_panel->SetSize(left, client.GetHeight() - terminal_height,
+                                  std::max(240, client.GetWidth() - left), terminal_height);
+        m_terminal_panel->Raise();
+    }
 }
 
 void AIAssistantPanel::style_button(wxButton* button, bool primary)
@@ -238,10 +261,15 @@ void AIAssistantPanel::build_ui()
     subtitle->SetForegroundColour(wxColour("#A7BAC5"));
     m_provider_status = new wxStaticText(header, wxID_ANY, "● Checking AI provider...");
     m_provider_status->SetForegroundColour(wxColour("#F5C451"));
+    auto* close_ai = new wxButton(header, wxID_ANY, "×", wxDefaultPosition, wxSize(34, 32), wxBORDER_NONE);
+    close_ai->SetBackgroundColour(wxColour("#14232D"));
+    close_ai->SetForegroundColour(*wxWHITE);
+    close_ai->SetToolTip("Close AI panel");
     brand->Add(title); brand->Add(subtitle, 0, wxTOP, 2);
     header_sizer->Add(logo, 0, wxALIGN_CENTER_VERTICAL | wxALL, 14);
     header_sizer->Add(brand, 1, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, 12);
-    header_sizer->Add(m_provider_status, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 14);
+    header_sizer->Add(m_provider_status, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
+    header_sizer->Add(close_ai, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
     header->SetSizer(header_sizer);
     root->Add(header, 0, wxEXPAND);
 
@@ -266,13 +294,20 @@ void AIAssistantPanel::build_ui()
     chat_sizer->Add(send, 0, wxEXPAND | wxALL, 12);
     chat->SetSizer(chat_sizer);
 
-    auto* terminal = new wxPanel(m_tabs);
+    m_terminal_panel = new wxPanel(m_owner, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+    auto* terminal = m_terminal_panel;
     terminal->SetBackgroundColour(wxColour("#101820"));
     auto* terminal_sizer = new wxBoxSizer(wxVERTICAL);
-    auto* terminal_title = new wxStaticText(terminal, wxID_ANY, "Bambu AI Terminal   •   Ctrl+Shift+A");
+    auto* terminal_header = new wxBoxSizer(wxHORIZONTAL);
+    auto* terminal_title = new wxStaticText(terminal, wxID_ANY, "TERMINAL   •   Bambu AI   •   Ctrl+Shift+A");
     terminal_title->SetForegroundColour(wxColour("#67E8C1"));
+    auto* close_terminal = new wxButton(terminal, wxID_ANY, "×", wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
+    close_terminal->SetBackgroundColour(wxColour("#101820"));
+    close_terminal->SetForegroundColour(*wxWHITE);
     wxFont mono = wxFontInfo(10).Family(wxFONTFAMILY_TELETYPE);
     terminal_title->SetFont(mono.Bold());
+    terminal_header->Add(terminal_title, 1, wxALIGN_CENTER_VERTICAL);
+    terminal_header->Add(close_terminal, 0, wxALIGN_CENTER_VERTICAL);
     m_terminal_output = new wxTextCtrl(terminal, wxID_ANY,
         "Bambu AI Terminal v1\nType 'help' to see safe commands. Native shell commands are intentionally blocked.\n",
         wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
@@ -290,12 +325,13 @@ void AIAssistantPanel::build_ui()
     command_row->Add(prompt_mark, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
     command_row->Add(m_terminal_input, 1, wxEXPAND | wxRIGHT, 8);
     command_row->Add(run, 0);
-    terminal_sizer->Add(terminal_title, 0, wxALL, 12);
-    terminal_sizer->Add(m_terminal_output, 1, wxEXPAND | wxLEFT | wxRIGHT, 12);
+    terminal_sizer->Add(terminal_header, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 10);
+    terminal_sizer->Add(m_terminal_output, 1, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 10);
     terminal_sizer->Add(command_row, 0, wxEXPAND | wxALL, 12);
     terminal->SetSizer(terminal_sizer);
 
-    auto* settings = new wxPanel(m_tabs);
+    auto* settings = new wxScrolledWindow(m_tabs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    settings->SetScrollRate(0, 12);
     auto* settings_sizer = new wxBoxSizer(wxVERTICAL);
     m_provider = new wxChoice(settings, wxID_ANY);
     m_provider->Append("NVIDIA API"); m_provider->Append("Ollama — local");
@@ -345,12 +381,13 @@ void AIAssistantPanel::build_ui()
     sharing->SetSizer(sharing_sizer);
 
     m_tabs->AddPage(chat, "Assistant");
-    m_tabs->AddPage(terminal, "AI Terminal");
     m_tabs->AddPage(settings, "Connections");
     m_tabs->AddPage(sharing, "Sharing");
     root->Add(m_tabs, 1, wxEXPAND);
     SetSizer(root);
 
+    close_ai->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { save_settings(); Hide(); });
+    close_terminal->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { if (m_terminal_panel) m_terminal_panel->Hide(); });
     attach->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_attachments(); });
     send->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { submit_prompt(); });
     run->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { run_terminal_input(); });
