@@ -252,7 +252,7 @@ void AIAssistantPanel::build_ui()
     auto* header = new wxPanel(this);
     header->SetBackgroundColour(wxColour("#14232D"));
     auto* header_sizer = new wxBoxSizer(wxHORIZONTAL);
-    auto* logo = new wxStaticBitmap(header, wxID_ANY, wxBitmap(ai_logo_xpm));
+    auto* logo = new wxStaticBitmap(header, wxID_ANY, create_scaled_bitmap("BambuStudioAI", header, 28));
     auto* brand = new wxBoxSizer(wxVERTICAL);
     auto* title = new wxStaticText(header, wxID_ANY, "Bambu Studio AI");
     wxFont title_font = title->GetFont(); title_font.SetPointSize(15); title_font.SetWeight(wxFONTWEIGHT_BOLD);

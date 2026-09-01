@@ -241,3 +241,14 @@ body
 	font-weight: 700;
 }
 
+
+
+/* Bambu Studio AI: Hebrew MakerWorld category */
+#SynagogueToysCategory { margin:18px 24px 8px; min-height:76px; padding:14px 18px; display:flex; align-items:center; gap:14px; border:1px solid rgba(47,201,168,.34); border-radius:16px; background:linear-gradient(100deg,rgba(47,201,168,.13),rgba(124,108,255,.10)); box-shadow:0 8px 24px rgba(12,32,39,.08); cursor:pointer; user-select:none; transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease; }
+#SynagogueToysCategory:hover,#SynagogueToysCategory:focus { transform:translateY(-1px); border-color:rgba(47,201,168,.7); box-shadow:0 10px 28px rgba(12,32,39,.14); outline:none; }
+.SynagogueToysIcon { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; flex:0 0 auto; color:#fff; font-size:24px; background:linear-gradient(135deg,#20bfa2,#7c6cff); }
+.SynagogueToysText { flex:1; min-width:0; text-align:right; }
+.SynagogueToysTitle { font-size:18px; font-weight:700; color:#14232d; }
+.SynagogueToysDescription { margin-top:3px; font-size:13px; color:#46606a; }
+.SynagogueToysSafety { margin-top:4px; font-size:11px; color:#7b5b24; }
+.SynagogueToysArrow { color:#20a88e; font-size:24px; font-weight:700; }

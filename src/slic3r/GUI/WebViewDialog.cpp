@@ -12,6 +12,7 @@
 #include <set>
 #include <utility>
 #include <algorithm>
+#include <vector>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -54,6 +55,57 @@ std::string extract_web_command(const std::string &payload)
     if (std::regex_search(head, m, re) && m.size() > 1)
         return m[1].str();
     return {};
+}
+
+
+std::string ExpandHebrewMakerWorldQuery(const std::string &keyword)
+{
+    wxString query = wxString::FromUTF8(keyword);
+    bool has_hebrew = false;
+    for (wxUniChar ch : query) {
+        const unsigned int cp = ch.GetValue();
+        if (cp >= 0x0590 && cp <= 0x05FF) { has_hebrew = true; break; }
+    }
+    if (!has_hebrew) return keyword;
+
+    struct Translation { const char *hebrew; const char *english; };
+    static const Translation translations[] = {
+        {"צעצועים לבית כנסת", " quiet compact fidget sensory toys for children "},
+        {"לא עושה רעש", " silent quiet "}, {"ללא רעש", " silent quiet "},
+        {"ללא חלקים קטנים", " no small parts toddler safe "},
+        {"מחשב נייד", " laptop "}, {"תלת מימד", " 3D "},
+        {"בית כנסת", " synagogue quiet "},
+        {"צעצועים", " toys "}, {"צעצוע", " toy "},
+        {"פידג'ט", " fidget sensory toy "}, {"פידג׳ט", " fidget sensory toy "},
+        {"פעוטות", " toddlers "}, {"ילדים", " kids children "}, {"ילד", " child "},
+        {"שקטים", " quiet silent "}, {"שקט", " quiet "},
+        {"קטנים", " small compact "}, {"קטן", " small compact "},
+        {"בטוחים", " safe "}, {"בטוח", " safe "},
+        {"גמישים", " articulated flexible "}, {"גמיש", " articulated flexible "},
+        {"סביבון", " spinning top "}, {"פאזל", " puzzle "}, {"משחק", " game "},
+        {"חיות", " animals "}, {"חיה", " animal "}, {"דינוזאור", " dinosaur "},
+        {"מכונית", " car "}, {"רובוט", " robot "}, {"כדור", " ball "},
+        {"מעמד", " stand holder "}, {"מחזיק", " holder "},
+        {"טלפון", " phone "}, {"מחשב", " computer "},
+        {"קופסה", " box "}, {"ארגונית", " organizer "},
+        {"מפתחות", " keys "}, {"מפתח", " key "}, {"בקבוק", " bottle "},
+        {"מיניאטורה", " miniature "}, {"להדפסה", " printable "},
+        {"יד", " hand "}, {"בית", " home "}
+    };
+    wxString expanded = query;
+    for (const auto &translation : translations)
+        expanded.Replace(wxString::FromUTF8(translation.hebrew),
+                         wxString::FromUTF8(translation.english), true);
+    wxString cleaned;
+    for (wxUniChar ch : expanded) {
+        const unsigned int cp = ch.GetValue();
+        cleaned += (cp >= 0x0590 && cp <= 0x05FF) ? wxUniChar(' ') : ch;
+    }
+    while (cleaned.Replace("  ", " ", true) > 0) {}
+    cleaned.Trim(true).Trim(false);
+    if (cleaned.empty()) return keyword;
+    cleaned += " 3D printable";
+    return cleaned.ToUTF8().data();
 }
 
 } // namespace
@@ -2208,9 +2260,10 @@ void WebViewPanel::OpenMakerworldSearchPage(std::string KeyWord)
 
     auto host = wxGetApp().get_model_http_url(wxGetApp().app_config->get_country_code());
 
+    const std::string search_keyword = ExpandHebrewMakerWorldQuery(KeyWord);
     wxString language_code = wxGetApp().current_language_code_safe().BeforeFirst('_');
 
-    m_online_LastUrl = (boost::format("%1%%2%/studio/webview/search?from=bambustudio&keyword=%3%&from_studio_home=true") % host % language_code.mb_str() % UrlEncode(KeyWord)).str();
+    m_online_LastUrl = (boost::format("%1%%2%/studio/webview/search?from=bambustudio&keyword=%3%&from_studio_home=true") % host % language_code.mb_str() % UrlEncode(search_keyword)).str();
     SwitchWebContent("online");
     //SwitchLeftMenu("online");
 }

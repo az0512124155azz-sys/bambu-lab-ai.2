@@ -20,6 +20,7 @@
 
 <script type="text/javascript" src="../data/text.js"></script>		
 <script type="text/javascript" src="js/home.js"></script>
+<script type="text/javascript" src="js/hebrew-makerworld.js"></script>
 <!--<script type="text/javascript" src="js/test.js"></script>-->
 	
 </head>
@@ -40,13 +41,23 @@
 			    <img src="img/search.svg" />
 			</div>			
 			<div id="HotModel_Search_InputArea" class="searchInputArea">
-				<input id="HotModel_Search_Input" class="searchInput" maxlength="1000" placeholder="" />
+				<input id="HotModel_Search_Input" class="searchInput" maxlength="1000" placeholder="Search MakerWorld — חיפוש בעברית או באנגלית" dir="auto" />
 			</div>
 		</div>			
 	</div>
 	
 	
 	<div id="HomeFullArea">
+    <div id="SynagogueToysCategory" role="button" tabindex="0" dir="rtl"
+         onclick="OpenSynagogueToys()" onkeydown="if(event.key==='Enter'||event.key===' '){OpenSynagogueToys();}">
+        <div class="SynagogueToysIcon">✦</div>
+        <div class="SynagogueToysText">
+            <div class="SynagogueToysTitle">צעצועים לבית כנסת</div>
+            <div class="SynagogueToysDescription">צעצועי יד שקטים, קטנים ומהנים לילדים</div>
+            <div class="SynagogueToysSafety">לפני שימוש של פעוטות יש לבדוק שאין חלקים קטנים או חדים</div>
+        </div>
+        <div class="SynagogueToysArrow">←</div>
+    </div>
 	
 	<!----------Recent open---------->
 	<div id="MiniRecentFileArea">
