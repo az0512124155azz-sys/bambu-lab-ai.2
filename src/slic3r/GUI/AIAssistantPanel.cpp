@@ -30,7 +30,7 @@
 namespace Slic3r::GUI {
 
 namespace {
-constexpr double PI = 3.14159265358979323846;
+constexpr double AI_PI = 3.14159265358979323846;
 
 constexpr const char* SYSTEM_PROMPT = R"PROMPT(
 You are Bambu Studio AI, an expert 3D-printing copilot embedded inside Bambu Studio.
@@ -144,7 +144,7 @@ void add_cylinder(std::vector<AIAssistantPanel::Triangle>& out, double radius, d
     const std::array<double, 3> bottom = {p[0], p[1], p[2]};
     const std::array<double, 3> top = {p[0], p[1], p[2] + height};
     for (int i = 0; i < segments; ++i) {
-        const double a0 = 2.0 * PI * i / segments, a1 = 2.0 * PI * (i + 1) / segments;
+        const double a0 = 2.0 * AI_PI * i / segments, a1 = 2.0 * AI_PI * (i + 1) / segments;
         const std::array<double, 3> b0 = {p[0] + radius * std::cos(a0), p[1] + radius * std::sin(a0), p[2]};
         const std::array<double, 3> b1 = {p[0] + radius * std::cos(a1), p[1] + radius * std::sin(a1), p[2]};
         const std::array<double, 3> t0 = {b0[0], b0[1], p[2] + height};
@@ -162,9 +162,9 @@ void add_sphere(std::vector<AIAssistantPanel::Triangle>& out, double radius, int
     segments = std::clamp(segments, 12, 96);
     const int rings = std::max(6, segments / 2);
     for (int r = 0; r < rings; ++r) {
-        const double t0 = PI * r / rings, t1 = PI * (r + 1) / rings;
+        const double t0 = AI_PI * r / rings, t1 = AI_PI * (r + 1) / rings;
         for (int s = 0; s < segments; ++s) {
-            const double a0 = 2.0 * PI * s / segments, a1 = 2.0 * PI * (s + 1) / segments;
+            const double a0 = 2.0 * AI_PI * s / segments, a1 = 2.0 * AI_PI * (s + 1) / segments;
             auto point = [&](double t, double a) {
                 return std::array<double, 3>{p[0] + radius * std::sin(t) * std::cos(a),
                                              p[1] + radius * std::sin(t) * std::sin(a),
