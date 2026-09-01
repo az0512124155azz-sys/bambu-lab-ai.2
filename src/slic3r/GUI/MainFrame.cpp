@@ -422,6 +422,8 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 #endif
         Refresh();
         Layout();
+        if (m_ai_assistant)
+            m_ai_assistant->layout_docked_panels();
         wxQueueEvent(wxGetApp().plater(), new SimpleEvent(EVT_NOTICE_CHILDE_SIZE_CHANGED));
         });
 
