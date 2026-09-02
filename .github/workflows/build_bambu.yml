@@ -137,9 +137,24 @@ jobs:
         if: inputs.os == 'windows-latest'
         shell: pwsh
         run: |
-          $makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
           $root = "${{ github.workspace }}\install-dir"
           $output = "${{ github.workspace }}\LayerMind3D_Setup_${{ env.ver }}.exe"
+          $app = Join-Path $root "bambu-studio.exe"
+          if (!(Test-Path $app)) {
+            throw "Installed Bambu Studio executable is missing: $app"
+          }
+          $nsisCandidates = @(
+            "${env:ProgramFiles(x86)}\NSIS\makensis.exe",
+            "$env:ProgramFiles\NSIS\makensis.exe",
+            "C:\ProgramData\chocolatey\bin\makensis.exe"
+          )
+          $makensis = $nsisCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (!$makensis) {
+            Write-Host "NSIS search paths:" -ForegroundColor Yellow
+            $nsisCandidates | ForEach-Object { Write-Host " - $_" }
+            throw "NSIS was installed but makensis.exe could not be located."
+          }
+          Write-Host "Using NSIS compiler: $makensis"
           & $makensis "/DROOTDIR=$root" "/DOUTFILE=$output" "${{ github.workspace }}\installer\LayerMind3D.nsi"
           if ($LASTEXITCODE -ne 0 -or !(Test-Path $output)) {
             throw "NSIS failed to create the LayerMind 3D installer."

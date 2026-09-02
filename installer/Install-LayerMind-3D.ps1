@@ -1,10 +1,10 @@
 param([Parameter(Mandatory=$true)][string]$Source)
 $ErrorActionPreference = "Stop"
 
-$exe = Get-ChildItem -Path $Source -Filter "BambuStudio.exe" -File -Recurse |
+$exe = Get-ChildItem -Path $Source -Filter "bambu-studio.exe" -File -Recurse |
     Select-Object -First 1
 if (-not $exe) {
-    throw "BambuStudio.exe was not found. Extract the complete Windows artifact first, then run the BAT file from its installer folder."
+    throw "bambu-studio.exe was not found. Extract the complete Windows artifact first, then run the BAT file from its installer folder."
 }
 
 $packageRoot = $exe.Directory.FullName

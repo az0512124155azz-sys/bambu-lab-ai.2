@@ -19,9 +19,12 @@ Section "LayerMind 3D" SEC_MAIN
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LayerMind3D" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\LayerMind3D" "UninstallString" '"$INSTDIR\Uninstall-LayerMind3D.exe"'
   CreateDirectory "$SMPROGRAMS\LayerMind 3D"
-  CreateShortcut "$SMPROGRAMS\LayerMind 3D\LayerMind 3D.lnk" "$INSTDIR\BambuStudio.exe" "" "$INSTDIR\BambuStudio.exe" 0
+  IfFileExists "$INSTDIR\bambu-studio.exe" app_found
+    Abort "bambu-studio.exe is missing from the installation package."
+  app_found:
+  CreateShortcut "$SMPROGRAMS\LayerMind 3D\LayerMind 3D.lnk" "$INSTDIR\bambu-studio.exe" "" "$INSTDIR\bambu-studio.exe" 0
   CreateShortcut "$SMPROGRAMS\LayerMind 3D\Uninstall.lnk" "$INSTDIR\Uninstall-LayerMind3D.exe"
-  CreateShortcut "$DESKTOP\LayerMind 3D.lnk" "$INSTDIR\BambuStudio.exe" "" "$INSTDIR\BambuStudio.exe" 0
+  CreateShortcut "$DESKTOP\LayerMind 3D.lnk" "$INSTDIR\bambu-studio.exe" "" "$INSTDIR\bambu-studio.exe" 0
 SectionEnd
 
 Section "Uninstall"
