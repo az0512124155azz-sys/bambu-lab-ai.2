@@ -160,6 +160,29 @@ jobs:
             throw "NSIS failed to create the LayerMind 3D installer."
           }
 
+      - name: Smoke-test persistent Windows installer
+        if: inputs.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $setup = "${{ github.workspace }}\LayerMind3D_Setup_${{ env.ver }}.exe"
+          $testRoot = Join-Path $env:RUNNER_TEMP "LayerMind3D-SmokeTest"
+          $desktopShortcut = Join-Path ([Environment]::GetFolderPath("Desktop")) "LayerMind 3D.lnk"
+          $process = Start-Process -FilePath $setup -ArgumentList @("/S", "/D=$testRoot") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Silent installer exited with code $($process.ExitCode)." }
+          $installedApp = Join-Path $testRoot "bambu-studio.exe"
+          if (!(Test-Path $installedApp)) { throw "Installer smoke test: bambu-studio.exe was not installed." }
+          if (!(Test-Path $desktopShortcut)) { throw "Installer smoke test: desktop shortcut was not created." }
+          $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($desktopShortcut)
+          if ($shortcut.TargetPath -ne $installedApp) {
+            throw "Installer smoke test: shortcut target is '$($shortcut.TargetPath)', expected '$installedApp'."
+          }
+          $uninstaller = Join-Path $testRoot "Uninstall-LayerMind3D.exe"
+          if (!(Test-Path $uninstaller)) { throw "Installer smoke test: uninstaller is missing." }
+          $uninstall = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "Silent uninstaller exited with code $($uninstall.ExitCode)." }
+          Start-Sleep -Seconds 2
+          if (Test-Path $installedApp) { throw "Installer smoke test: uninstall did not remove the application." }
+
       - name: Pack app
         if: inputs.os == 'windows-latest'
         working-directory: ${{ github.workspace }}

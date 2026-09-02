@@ -322,43 +322,6 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     else
         init_menubar_as_editor();
 
-    // AI shortcuts: Ctrl+Shift+Z opens the general assistant,
-    // Ctrl+Shift+1 opens the modeling agent, and Ctrl+Shift+A opens the terminal.
-    constexpr int ai_assistant_menu_id = wxID_HIGHEST + 4901;
-    constexpr int ai_terminal_menu_id  = wxID_HIGHEST + 4902;
-    constexpr int ai_modeling_menu_id  = wxID_HIGHEST + 4903;
-    wxAcceleratorEntry ai_entries[3];
-    ai_entries[0].Set(wxACCEL_CTRL | wxACCEL_SHIFT, static_cast<int>('Z'), ai_assistant_menu_id);
-    ai_entries[1].Set(wxACCEL_CTRL | wxACCEL_SHIFT, static_cast<int>('A'), ai_terminal_menu_id);
-    ai_entries[2].Set(wxACCEL_CTRL | wxACCEL_SHIFT, static_cast<int>('1'), ai_modeling_menu_id);
-    SetAcceleratorTable(wxAcceleratorTable(3, ai_entries));
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) { toggle_ai_assistant(); }, ai_assistant_menu_id);
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) { show_ai_terminal(); }, ai_terminal_menu_id);
-    Bind(wxEVT_MENU, [this](wxCommandEvent&) { show_ai_modeling_agent(); }, ai_modeling_menu_id);
-    // WebView2 and some native text controls may consume accelerator keys before
-    // the frame accelerator table sees them. CHAR_HOOK makes the three AI
-    // shortcuts reliable regardless of the currently focused Bambu Studio page.
-    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent& event) {
-        if (!event.ControlDown() || !event.ShiftDown()) {
-            event.Skip();
-            return;
-        }
-        const int key = event.GetKeyCode();
-        if (key == 'Z') {
-            toggle_ai_assistant();
-            return;
-        }
-        if (key == 'A') {
-            show_ai_terminal();
-            return;
-        }
-        if (key == '1' || key == WXK_NUMPAD1) {
-            show_ai_modeling_agent();
-            return;
-        }
-        event.Skip();
-    });
-
     // BBS
 #if 0
     // This is needed on Windows to fake the CTRL+# of the window menu when using the numpad
@@ -721,6 +684,14 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
 ;    }
     this->Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent &evt) {
         const int key_code = evt.GetKeyCode();
+        // Keep every application shortcut in this single dispatcher. Having a
+        // second CHAR_HOOK or accelerator for these keys caused a toggle to run
+        // twice (open, then immediately close) for one physical key press.
+        if (evt.CmdDown() && evt.ShiftDown()) {
+            if (key_code == 'Z') { toggle_ai_assistant(); return; }
+            if (key_code == 'A') { show_ai_terminal(); return; }
+            if (key_code == '1' || key_code == WXK_NUMPAD1) { show_ai_modeling_agent(); return; }
+        }
 #ifdef __APPLE__
         if (evt.CmdDown() && (evt.GetKeyCode() == 'H')) {
             // Pass Cmd+H through to the macOS application menu so the

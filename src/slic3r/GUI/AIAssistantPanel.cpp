@@ -104,7 +104,7 @@ wxString join_strings(const std::vector<wxString>& values)
 void add_labelled(wxWindow* parent, wxSizer* sizer, const wxString& label, wxWindow* control)
 {
     auto* text = new wxStaticText(parent, wxID_ANY, label);
-    text->SetForegroundColour(wxColour("#334155"));
+    text->SetForegroundColour(wxColour("#AFC1CC"));
     sizer->Add(text, 0, wxLEFT | wxRIGHT | wxTOP, 12);
     sizer->Add(control, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 12);
 }
@@ -253,30 +253,31 @@ void AIAssistantPanel::layout_docked_panels()
 
 void AIAssistantPanel::style_button(wxButton* button, bool primary)
 {
-    button->SetMinSize(wxSize(-1, 38));
-    button->SetBackgroundColour(wxColour(primary ? "#16A574" : "#E2E8F0"));
-    button->SetForegroundColour(wxColour(primary ? "#FFFFFF" : "#172033"));
+    button->SetMinSize(wxSize(-1, 40));
+    button->SetBackgroundColour(wxColour(primary ? "#34D399" : "#253744"));
+    button->SetForegroundColour(wxColour(primary ? "#071C17" : "#E7F0F5"));
+    wxFont font = button->GetFont(); font.SetWeight(wxFONTWEIGHT_BOLD); button->SetFont(font);
 }
 
 void AIAssistantPanel::build_ui()
 {
-    SetBackgroundColour(wxColour("#F4F7F9"));
+    SetBackgroundColour(wxColour("#0D171E"));
     auto* root = new wxBoxSizer(wxVERTICAL);
 
     auto* header = new wxPanel(this);
-    header->SetBackgroundColour(wxColour("#14232D"));
+    header->SetBackgroundColour(wxColour("#0A1218"));
     auto* header_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* logo = new wxStaticBitmap(header, wxID_ANY, create_scaled_bitmap("BambuStudioAI", header, 28));
     auto* brand = new wxBoxSizer(wxVERTICAL);
     auto* title = new wxStaticText(header, wxID_ANY, "LayerMind 3D");
-    wxFont title_font = title->GetFont(); title_font.SetPointSize(15); title_font.SetWeight(wxFONTWEIGHT_BOLD);
+    wxFont title_font = title->GetFont(); title_font.SetPointSize(17); title_font.SetWeight(wxFONTWEIGHT_BOLD);
     title->SetFont(title_font); title->SetForegroundColour(*wxWHITE);
     auto* subtitle = new wxStaticText(header, wxID_ANY, "Multi-model CAD copilot inside the slicer");
-    subtitle->SetForegroundColour(wxColour("#A7BAC5"));
+    subtitle->SetForegroundColour(wxColour("#7EE2C2"));
     m_provider_status = new wxStaticText(header, wxID_ANY, "● Checking AI provider...");
     m_provider_status->SetForegroundColour(wxColour("#F5C451"));
     auto* close_ai = new wxButton(header, wxID_ANY, "×", wxDefaultPosition, wxSize(34, 32), wxBORDER_NONE);
-    close_ai->SetBackgroundColour(wxColour("#14232D"));
+    close_ai->SetBackgroundColour(wxColour("#0A1218"));
     close_ai->SetForegroundColour(*wxWHITE);
     close_ai->SetToolTip("Close AI panel");
     brand->Add(title); brand->Add(subtitle, 0, wxTOP, 2);
@@ -288,17 +289,20 @@ void AIAssistantPanel::build_ui()
     root->Add(header, 0, wxEXPAND);
 
     m_tabs = new wxNotebook(this, wxID_ANY);
+    m_tabs->SetBackgroundColour(wxColour("#0D171E"));
 
     auto* chat = new wxPanel(m_tabs);
+    chat->SetBackgroundColour(wxColour("#0D171E"));
     auto* chat_sizer = new wxBoxSizer(wxVERTICAL);
     auto* modeling_bar = new wxPanel(chat);
-    modeling_bar->SetBackgroundColour(wxColour("#E7FBF4"));
+    modeling_bar->SetBackgroundColour(wxColour("#132A29"));
     auto* modeling_sizer = new wxBoxSizer(wxVERTICAL);
     auto* modeling_title = new wxStaticText(modeling_bar, wxID_ANY, "MODELING WORKSPACE   •   Ctrl+Shift+1");
-    modeling_title->SetForegroundColour(wxColour("#087F5B"));
+    modeling_title->SetForegroundColour(wxColour("#69E6BE"));
     wxFont modeling_font = modeling_title->GetFont(); modeling_font.SetWeight(wxFONTWEIGHT_BOLD);
     modeling_title->SetFont(modeling_font);
     m_canvas_status = new wxStaticText(modeling_bar, wxID_ANY, "● Preview: Bambu Studio slicer canvas (live)");
+    m_canvas_status->SetForegroundColour(wxColour("#B7C8D4"));
     m_modeling_target = new wxChoice(modeling_bar, wxID_ANY);
     m_modeling_target->Append("Bambu Studio native generator");
     m_modeling_target->Append("Fusion 360 via MCP");
@@ -312,17 +316,31 @@ void AIAssistantPanel::build_ui()
     m_transcript = new wxTextCtrl(chat, wxID_ANY,
         "LayerMind 3D is ready. Describe the object; I will ask for missing dimensions before modeling.\n",
         wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
-    m_transcript->SetBackgroundColour(*wxWHITE);
+    m_transcript->SetBackgroundColour(wxColour("#111E27"));
+    m_transcript->SetForegroundColour(wxColour("#E8F1F5"));
     m_attachments = new wxListBox(chat, wxID_ANY, wxDefaultPosition, wxSize(-1, 78));
+    m_attachments->SetBackgroundColour(wxColour("#111E27"));
+    m_attachments->SetForegroundColour(wxColour("#BFD0DA"));
     auto* attach = new wxButton(chat, wxID_ANY, "+  Attach files");
     m_prompt = new wxTextCtrl(chat, wxID_ANY, {}, wxDefaultPosition, wxSize(-1, 90), wxTE_MULTILINE);
+    m_prompt->SetBackgroundColour(wxColour("#162630"));
+    m_prompt->SetForegroundColour(wxColour("#FFFFFF"));
     m_prompt->SetHint("Describe a model or ask the AI to change slicer settings...");
     auto* send = new wxButton(chat, wxID_ANY, "Send to AI  →");
     style_button(attach); style_button(send, true);
+    auto* quick_row = new wxBoxSizer(wxHORIZONTAL);
+    auto* quick_design = new wxButton(chat, wxID_ANY, "New part");
+    auto* quick_fix = new wxButton(chat, wxID_ANY, "Inspect model");
+    auto* quick_print = new wxButton(chat, wxID_ANY, "Optimize print");
+    style_button(quick_design); style_button(quick_fix); style_button(quick_print);
+    quick_row->Add(quick_design, 1, wxRIGHT, 6);
+    quick_row->Add(quick_fix, 1, wxLEFT | wxRIGHT, 3);
+    quick_row->Add(quick_print, 1, wxLEFT, 6);
     chat_sizer->Add(modeling_bar, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 12);
     chat_sizer->Add(m_transcript, 1, wxEXPAND | wxALL, 12);
     chat_sizer->Add(m_attachments, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
     chat_sizer->Add(attach, 0, wxEXPAND | wxALL, 12);
+    chat_sizer->Add(quick_row, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 12);
     chat_sizer->Add(m_prompt, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
     chat_sizer->Add(send, 0, wxEXPAND | wxALL, 12);
     chat->SetSizer(chat_sizer);
@@ -364,6 +382,7 @@ void AIAssistantPanel::build_ui()
     terminal->SetSizer(terminal_sizer);
 
     auto* settings = new wxScrolledWindow(m_tabs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
+    settings->SetBackgroundColour(wxColour("#0D171E"));
     settings->SetScrollRate(0, 12);
     auto* settings_sizer = new wxBoxSizer(wxVERTICAL);
     m_provider = new wxChoice(settings, wxID_ANY);
@@ -402,6 +421,7 @@ void AIAssistantPanel::build_ui()
     settings->SetSizer(settings_sizer);
 
     auto* sharing = new wxPanel(m_tabs);
+    sharing->SetBackgroundColour(wxColour("#0D171E"));
     auto* sharing_sizer = new wxBoxSizer(wxVERTICAL);
     m_share_email = new wxTextCtrl(sharing, wxID_ANY);
     m_share_role = new wxChoice(sharing, wxID_ANY);
@@ -433,6 +453,18 @@ void AIAssistantPanel::build_ui()
     browse_mcp->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { choose_mcp_config(); });
     test_mcp->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { detect_mcp_config(true); });
     add_share->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { add_share_rule(); });
+    quick_design->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        m_prompt->SetValue("Create a new printable part. Ask me for dimensions, fit, loads, material and tolerances before modeling.");
+        m_prompt->SetFocus();
+    });
+    quick_fix->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        m_prompt->SetValue("Inspect the current slicer model and suggest geometry or printability fixes. Explain each proposed change first.");
+        m_prompt->SetFocus();
+    });
+    quick_print->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+        m_prompt->SetValue("Optimize the current model and slicer settings for a reliable print while preserving dimensions.");
+        m_prompt->SetFocus();
+    });
 }
 
 void AIAssistantPanel::load_settings()
