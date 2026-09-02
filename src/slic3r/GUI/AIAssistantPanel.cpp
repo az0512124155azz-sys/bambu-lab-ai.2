@@ -186,6 +186,7 @@ AIAssistantPanel::AIAssistantPanel(MainFrame* owner)
 {
     build_ui();
     load_settings();
+    load_chat_history();
     detect_mcp_config(false);
     detect_local_ollama();
     Hide();
@@ -201,6 +202,19 @@ void AIAssistantPanel::toggle()
     }
     Show();
     layout_docked_panels();
+    Raise();
+    m_prompt->SetFocus();
+}
+
+void AIAssistantPanel::show_modeling_agent()
+{
+    if (!IsShown()) {
+        Show();
+        layout_docked_panels();
+    }
+    m_tabs->SetSelection(0);
+    m_canvas_status->SetLabel("● Preview: Bambu Studio slicer canvas (live)");
+    m_prompt->SetHint("Describe the exact part, dimensions, loads, material and constraints...");
     Raise();
     m_prompt->SetFocus();
 }
@@ -254,10 +268,10 @@ void AIAssistantPanel::build_ui()
     auto* header_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* logo = new wxStaticBitmap(header, wxID_ANY, create_scaled_bitmap("BambuStudioAI", header, 28));
     auto* brand = new wxBoxSizer(wxVERTICAL);
-    auto* title = new wxStaticText(header, wxID_ANY, "Bambu Studio AI");
+    auto* title = new wxStaticText(header, wxID_ANY, "LayerMind 3D");
     wxFont title_font = title->GetFont(); title_font.SetPointSize(15); title_font.SetWeight(wxFONTWEIGHT_BOLD);
     title->SetFont(title_font); title->SetForegroundColour(*wxWHITE);
-    auto* subtitle = new wxStaticText(header, wxID_ANY, "Design, slice and automate — with approvals");
+    auto* subtitle = new wxStaticText(header, wxID_ANY, "Multi-model CAD copilot inside the slicer");
     subtitle->SetForegroundColour(wxColour("#A7BAC5"));
     m_provider_status = new wxStaticText(header, wxID_ANY, "● Checking AI provider...");
     m_provider_status->SetForegroundColour(wxColour("#F5C451"));
@@ -277,8 +291,26 @@ void AIAssistantPanel::build_ui()
 
     auto* chat = new wxPanel(m_tabs);
     auto* chat_sizer = new wxBoxSizer(wxVERTICAL);
+    auto* modeling_bar = new wxPanel(chat);
+    modeling_bar->SetBackgroundColour(wxColour("#E7FBF4"));
+    auto* modeling_sizer = new wxBoxSizer(wxVERTICAL);
+    auto* modeling_title = new wxStaticText(modeling_bar, wxID_ANY, "MODELING WORKSPACE   •   Ctrl+Shift+1");
+    modeling_title->SetForegroundColour(wxColour("#087F5B"));
+    wxFont modeling_font = modeling_title->GetFont(); modeling_font.SetWeight(wxFONTWEIGHT_BOLD);
+    modeling_title->SetFont(modeling_font);
+    m_canvas_status = new wxStaticText(modeling_bar, wxID_ANY, "● Preview: Bambu Studio slicer canvas (live)");
+    m_modeling_target = new wxChoice(modeling_bar, wxID_ANY);
+    m_modeling_target->Append("Bambu Studio native generator");
+    m_modeling_target->Append("Fusion 360 via MCP");
+    m_modeling_target->Append("Blender via MCP");
+    m_modeling_target->Append("Fusion 360 + Blender via MCP");
+    m_modeling_target->SetSelection(0);
+    modeling_sizer->Add(modeling_title, 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    modeling_sizer->Add(m_canvas_status, 0, wxLEFT | wxRIGHT | wxTOP, 10);
+    modeling_sizer->Add(m_modeling_target, 0, wxEXPAND | wxALL, 10);
+    modeling_bar->SetSizer(modeling_sizer);
     m_transcript = new wxTextCtrl(chat, wxID_ANY,
-        "Bambu Studio AI is ready. Ask for a model, slicer advice, or printer help.\n",
+        "LayerMind 3D is ready. Describe the object; I will ask for missing dimensions before modeling.\n",
         wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
     m_transcript->SetBackgroundColour(*wxWHITE);
     m_attachments = new wxListBox(chat, wxID_ANY, wxDefaultPosition, wxSize(-1, 78));
@@ -287,6 +319,7 @@ void AIAssistantPanel::build_ui()
     m_prompt->SetHint("Describe a model or ask the AI to change slicer settings...");
     auto* send = new wxButton(chat, wxID_ANY, "Send to AI  →");
     style_button(attach); style_button(send, true);
+    chat_sizer->Add(modeling_bar, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 12);
     chat_sizer->Add(m_transcript, 1, wxEXPAND | wxALL, 12);
     chat_sizer->Add(m_attachments, 0, wxEXPAND | wxLEFT | wxRIGHT, 12);
     chat_sizer->Add(attach, 0, wxEXPAND | wxALL, 12);
@@ -334,7 +367,10 @@ void AIAssistantPanel::build_ui()
     settings->SetScrollRate(0, 12);
     auto* settings_sizer = new wxBoxSizer(wxVERTICAL);
     m_provider = new wxChoice(settings, wxID_ANY);
-    m_provider->Append("NVIDIA API"); m_provider->Append("Ollama — local");
+    m_provider->Append("NVIDIA API");
+    m_provider->Append("Ollama — local");
+    m_provider->Append("OpenAI-compatible API — any vendor");
+    m_provider->Append("Local OpenAI-compatible — Bionic/other");
     m_endpoint = new wxTextCtrl(settings, wxID_ANY);
     m_model = new wxTextCtrl(settings, wxID_ANY);
     m_api_key = new wxTextCtrl(settings, wxID_ANY, {}, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
@@ -358,7 +394,7 @@ void AIAssistantPanel::build_ui()
     add_labelled(settings, settings_sizer, "Completion email", m_email);
     add_labelled(settings, settings_sizer, "Calendar connection", m_calendar);
     settings_sizer->Add(m_monitor_print, 0, wxLEFT | wxRIGHT | wxBOTTOM, 12);
-    auto* detect_ollama = new wxButton(settings, wxID_ANY, "Detect Ollama and installed models");
+    auto* detect_ollama = new wxButton(settings, wxID_ANY, "Detect local AI (Ollama / Bionic-compatible)");
     auto* save = new wxButton(settings, wxID_ANY, "Save settings");
     style_button(detect_ollama); style_button(save, true);
     settings_sizer->Add(detect_ollama, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 12);
@@ -401,27 +437,56 @@ void AIAssistantPanel::build_ui()
 
 void AIAssistantPanel::load_settings()
 {
-    m_provider->SetSelection(config_value("provider", "nvidia") == "ollama" ? 1 : 0);
+    const wxString provider = config_value("provider", "nvidia");
+    m_provider->SetSelection(provider == "ollama" ? 1 : provider == "compatible" ? 2 : provider == "local-compatible" ? 3 : 0);
     m_endpoint->SetValue(config_value("endpoint", "https://integrate.api.nvidia.com/v1"));
     m_model->SetValue(config_value("model", "nvidia/nemotron-3-super-120b-a12b"));
     m_email->SetValue(config_value("notification_email"));
     m_calendar->SetValue(config_value("calendar_connection"));
     m_mcp_config->SetValue(config_value("mcp_config"));
     m_monitor_print->SetValue(config_value("monitor_print", "false") == "true");
+    long target = 0;
+    if (config_value("modeling_target", "0").ToLong(&target))
+        m_modeling_target->SetSelection(std::clamp(static_cast<int>(target), 0, 3));
 }
 
 void AIAssistantPanel::save_settings()
 {
     auto* config = wxGetApp().app_config;
-    config->set("ai_assistant", "provider", m_provider->GetSelection() == 1 ? "ollama" : "nvidia");
+    static const char* providers[] = {"nvidia", "ollama", "compatible", "local-compatible"};
+    const int provider_index = std::clamp(m_provider->GetSelection(), 0, 3);
+    config->set("ai_assistant", "provider", providers[provider_index]);
     config->set("ai_assistant", "endpoint", m_endpoint->GetValue().ToStdString());
     config->set("ai_assistant", "model", m_model->GetValue().ToStdString());
     config->set("ai_assistant", "notification_email", m_email->GetValue().ToStdString());
     config->set("ai_assistant", "calendar_connection", m_calendar->GetValue().ToStdString());
     config->set("ai_assistant", "mcp_config", m_mcp_config->GetValue().ToStdString());
     config->set("ai_assistant", "monitor_print", m_monitor_print->GetValue() ? "true" : "false");
+    config->set("ai_assistant", "modeling_target", std::to_string(m_modeling_target->GetSelection()));
     config->save();
     append_message("System", "Settings saved. API secrets remain in memory only.");
+}
+
+void AIAssistantPanel::load_chat_history()
+{
+    const wxString directory = wxStandardPaths::Get().GetUserDataDir() + wxFILE_SEP_PATH + "layermind";
+    const wxString path = directory + wxFILE_SEP_PATH + "chat-history.txt";
+    if (!wxFileExists(path)) return;
+    std::ifstream input(path.ToStdString(), std::ios::binary);
+    std::ostringstream buffer; buffer << input.rdbuf();
+    const std::string history = buffer.str();
+    if (!history.empty()) m_transcript->SetValue(wxString::FromUTF8(history));
+}
+
+void AIAssistantPanel::save_chat_history() const
+{
+    if (!m_transcript) return;
+    const wxString directory = wxStandardPaths::Get().GetUserDataDir() + wxFILE_SEP_PATH + "layermind";
+    if (!wxDirExists(directory))
+        wxFileName::Mkdir(directory, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+    std::ofstream output((directory + wxFILE_SEP_PATH + "chat-history.txt").ToStdString(),
+                         std::ios::binary | std::ios::trunc);
+    output << m_transcript->GetValue().ToUTF8().data();
 }
 
 void AIAssistantPanel::add_attachments()
@@ -451,7 +516,10 @@ void AIAssistantPanel::submit_prompt()
     if (prompt.empty()) return;
     append_message("You", prompt); m_prompt->Clear();
     append_message("System", "Contacting " + m_provider->GetStringSelection() + "...");
-    send_provider_request(prompt);
+    wxString modeling_prompt = prompt;
+    modeling_prompt += "\n\nMODELING TARGET: " + m_modeling_target->GetStringSelection();
+    modeling_prompt += "\nThe authoritative preview is the current Bambu Studio slicer canvas. Ask concise clarification questions when dimensions, fit, material, load, tolerances, or manufacturing intent are missing. Do not claim Fusion 360 or Blender changed anything unless its MCP tool returned success. When a model is created, provide exact millimetre dimensions and explain the design decisions.";
+    send_provider_request(modeling_prompt);
 }
 
 void AIAssistantPanel::detect_local_ollama()
@@ -474,17 +542,40 @@ void AIAssistantPanel::detect_local_ollama()
             })
             .on_error([&failure](std::string, std::string error, unsigned) { failure = std::move(error); })
             .perform_sync();
-        wxGetApp().CallAfter([this, models, failure]() {
+        std::string compatible_endpoint;
+        if (models.empty()) {
+            const std::vector<std::string> candidates = {
+                "http://127.0.0.1:8000/v1/models",
+                "http://127.0.0.1:7900/v1/models"
+            };
+            for (const auto& candidate : candidates) {
+                Slic3r::Http::get(candidate).timeout_max(2)
+                    .on_complete([&models, &compatible_endpoint, &candidate](std::string data, unsigned status) {
+                        if (status < 200 || status >= 300) return;
+                        try {
+                            const auto json = nlohmann::json::parse(data);
+                            for (const auto& item : json.value("data", nlohmann::json::array())) {
+                                const std::string id = item.value("id", "");
+                                if (!id.empty()) models.emplace_back(wxString::FromUTF8(id));
+                            }
+                            if (!models.empty()) compatible_endpoint = candidate.substr(0, candidate.size() - 7);
+                        } catch (...) {}
+                    }).perform_sync();
+                if (!models.empty()) break;
+            }
+        }
+        wxGetApp().CallAfter([this, models, failure, compatible_endpoint]() {
             m_ollama_models = models;
             if (!models.empty()) {
-                m_provider->SetSelection(1);
-                m_endpoint->SetValue("http://127.0.0.1:11434");
+                const bool compatible = !compatible_endpoint.empty();
+                m_provider->SetSelection(compatible ? 3 : 1);
+                m_endpoint->SetValue(compatible ? wxString::FromUTF8(compatible_endpoint) : "http://127.0.0.1:11434");
                 const wxString current = m_model->GetValue();
                 const bool installed = std::find(models.begin(), models.end(), current) != models.end();
                 if (!installed) m_model->SetValue(models.front());
-                m_provider_status->SetLabel("● Ollama: " + m_model->GetValue());
+                m_provider_status->SetLabel(wxString(compatible ? "● Local compatible: " : "● Ollama: ") + m_model->GetValue());
                 m_provider_status->SetForegroundColour(wxColour("#67E8C1"));
-                append_message("System", "Ollama connected. Installed models: " + join_strings(models) + ".");
+                append_message("System", wxString(compatible ? "Local OpenAI-compatible AI connected. Models: " : "Ollama connected. Installed models: ") + join_strings(models) + ".");
             } else {
                 if (m_provider->GetSelection() == 1) {
                     m_provider->SetSelection(0);
@@ -600,6 +691,7 @@ void AIAssistantPanel::handle_ai_answer(const wxString& answer)
 void AIAssistantPanel::append_message(const wxString& sender, const wxString& message)
 {
     m_transcript->AppendText("\n" + sender + ": " + message + "\n");
+    save_chat_history();
 }
 
 void AIAssistantPanel::append_terminal(const wxString& line)

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "fusion360": {
+      "command": "REPLACE_WITH_FUSION_MCP_COMMAND",
+      "args": [],
+      "env": {}
+    },
+    "blender": {
+      "command": "REPLACE_WITH_BLENDER_MCP_COMMAND",
+      "args": [],
+      "env": {}
+    }
+  }
+}

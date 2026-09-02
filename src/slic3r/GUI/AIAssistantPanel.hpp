@@ -23,6 +23,7 @@ class AIAssistantPanel final : public wxPanel
 public:
     explicit AIAssistantPanel(MainFrame* owner);
     void toggle();
+    void show_modeling_agent();
     void show_terminal();
     void layout_docked_panels();
 
@@ -38,6 +39,8 @@ private:
     void style_button(wxButton* button, bool primary = false);
     void load_settings();
     void save_settings();
+    void load_chat_history();
+    void save_chat_history() const;
     void add_attachments();
     void add_share_rule();
     void submit_prompt();
@@ -58,6 +61,7 @@ private:
     wxNotebook*           m_tabs {nullptr};
     wxPanel*              m_terminal_panel {nullptr};
     wxChoice*             m_provider {nullptr};
+    wxChoice*             m_modeling_target {nullptr};
     wxTextCtrl*           m_endpoint {nullptr};
     wxTextCtrl*           m_model {nullptr};
     wxTextCtrl*           m_api_key {nullptr};
@@ -66,6 +70,7 @@ private:
     wxTextCtrl*           m_mcp_config {nullptr};
     wxStaticText*         m_provider_status {nullptr};
     wxStaticText*         m_mcp_status {nullptr};
+    wxStaticText*         m_canvas_status {nullptr};
     wxTextCtrl*           m_transcript {nullptr};
     wxTextCtrl*           m_prompt {nullptr};
     wxTextCtrl*           m_terminal_output {nullptr};
