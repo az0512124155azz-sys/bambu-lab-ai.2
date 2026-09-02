@@ -335,6 +335,29 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
     Bind(wxEVT_MENU, [this](wxCommandEvent&) { toggle_ai_assistant(); }, ai_assistant_menu_id);
     Bind(wxEVT_MENU, [this](wxCommandEvent&) { show_ai_terminal(); }, ai_terminal_menu_id);
     Bind(wxEVT_MENU, [this](wxCommandEvent&) { show_ai_modeling_agent(); }, ai_modeling_menu_id);
+    // WebView2 and some native text controls may consume accelerator keys before
+    // the frame accelerator table sees them. CHAR_HOOK makes the three AI
+    // shortcuts reliable regardless of the currently focused Bambu Studio page.
+    Bind(wxEVT_CHAR_HOOK, [this](wxKeyEvent& event) {
+        if (!event.ControlDown() || !event.ShiftDown()) {
+            event.Skip();
+            return;
+        }
+        const int key = event.GetKeyCode();
+        if (key == 'Z') {
+            toggle_ai_assistant();
+            return;
+        }
+        if (key == 'A') {
+            show_ai_terminal();
+            return;
+        }
+        if (key == '1' || key == WXK_NUMPAD1) {
+            show_ai_modeling_agent();
+            return;
+        }
+        event.Skip();
+    });
 
     // BBS
 #if 0
