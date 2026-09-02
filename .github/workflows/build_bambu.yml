@@ -133,11 +133,17 @@ jobs:
           cmake .. -G "Visual Studio 18 2026" -A X64 -DBBL_RELEASE_TO_PUBLIC=1 -DBBL_INTERNAL_TESTING=0 -DCMAKE_PREFIX_PATH="${{ github.workspace }}\deps\build\BambuStudio_dep\usr\local" -DCMAKE_INSTALL_PREFIX="../install-dir" -DCMAKE_BUILD_TYPE=Release -DWIN10SDK_PATH="C:/Program Files (x86)/Windows Kits/10/Include/10.0.22000.0" -DPKG_CONFIG_EXECUTABLE="C:/ProgramData/chocolatey/bin/pkg-config.exe"
           cmake --build . --target install --config Release -- -m
 
-      # - name: Create installer Win
-      #   if: inputs.os == 'windows-latest'
-      #   working-directory: ${{ github.workspace }}/build
-      #   run: |
-      #     cpack -G NSIS
+      - name: Create persistent Windows installer
+        if: inputs.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $makensis = (Get-Command makensis.exe -ErrorAction Stop).Source
+          $root = "${{ github.workspace }}\install-dir"
+          $output = "${{ github.workspace }}\LayerMind3D_Setup_${{ env.ver }}.exe"
+          & $makensis "/DROOTDIR=$root" "/DOUTFILE=$output" "${{ github.workspace }}\installer\LayerMind3D.nsi"
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path $output)) {
+            throw "NSIS failed to create the LayerMind 3D installer."
+          }
 
       - name: Pack app
         if: inputs.os == 'windows-latest'
@@ -157,6 +163,13 @@ jobs:
         with:
           name: BambuStudio_Windows_${{ env.ver }}_portable
           path: ${{ github.workspace }}/BambuStudio_Windows_${{ env.ver }}_portable.zip
+
+      - name: Upload persistent Windows installer
+        if: inputs.os == 'windows-latest'
+        uses: actions/upload-artifact@v6
+        with:
+          name: LayerMind3D_Windows_Setup_${{ env.ver }}
+          path: ${{ github.workspace }}/LayerMind3D_Setup_${{ env.ver }}.exe
 
 
   # Ubuntu

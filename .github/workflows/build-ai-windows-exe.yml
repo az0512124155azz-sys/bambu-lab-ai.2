@@ -8,6 +8,7 @@ on:
       - 'src/**'
       - 'deps/**'
       - 'resources/**'
+      - 'installer/**'
       - 'bbl/**'
       - '**/CMakeLists.txt'
       - 'version.inc'
