@@ -117,6 +117,27 @@ jobs:
         if: inputs.os == 'windows-latest'
         uses: microsoft/setup-msbuild@v2
 
+      - name: Validate AI window lifecycle invariants
+        if: inputs.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $main = Get-Content "${{ github.workspace }}\src\slic3r\GUI\MainFrame.cpp" -Raw
+          $panel = Get-Content "${{ github.workspace }}\src\slic3r\GUI\AIAssistantPanel.cpp" -Raw
+          $header = Get-Content "${{ github.workspace }}\src\slic3r\GUI\AIAssistantPanel.hpp" -Raw
+          if (($main | Select-String -Pattern 'Bind\(wxEVT_CHAR_HOOK' -AllMatches).Matches.Count -ne 1) {
+            throw "AI regression: MainFrame must have exactly one CHAR_HOOK dispatcher."
+          }
+          if ($main -match 'ai_assistant_menu_id|ai_terminal_menu_id|ai_modeling_menu_id') {
+            throw "AI regression: duplicate accelerator dispatcher returned."
+          }
+          if ($header -notmatch 'AIAssistantPanel final : public wxFrame') {
+            throw "AI regression: assistant must remain a visible owned tool window, not an unmanaged child overlay."
+          }
+          if ($panel -notmatch 'm_terminal_panel->Show\(true\)' -or $panel -match 'm_terminal_panel->IsShown\(\).*Hide') {
+            throw "AI regression: terminal hotkey must open, never immediately toggle closed."
+          }
+          Write-Host "AI shortcut and window lifecycle invariants passed." -ForegroundColor Green
+
       - name: Install nsis and pkgconfig
         if: inputs.os == 'windows-latest'
         run: |

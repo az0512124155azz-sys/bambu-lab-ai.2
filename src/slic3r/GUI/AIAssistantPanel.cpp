@@ -181,7 +181,8 @@ void add_sphere(std::vector<AIAssistantPanel::Triangle>& out, double radius, int
 }
 
 AIAssistantPanel::AIAssistantPanel(MainFrame* owner)
-    : wxPanel(owner, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE),
+    : wxFrame(owner, wxID_ANY, "LayerMind 3D", wxDefaultPosition, wxDefaultSize,
+              wxFRAME_TOOL_WINDOW | wxFRAME_NO_TASKBAR | wxBORDER_NONE),
       m_owner(owner)
 {
     build_ui();
@@ -195,23 +196,28 @@ AIAssistantPanel::AIAssistantPanel(MainFrame* owner)
 
 void AIAssistantPanel::toggle()
 {
-    if (IsShown()) {
-        save_settings();
-        Hide();
-        return;
-    }
-    Show();
+    show_assistant();
+}
+
+void AIAssistantPanel::show_assistant()
+{
+    Show(true);
     layout_docked_panels();
     Raise();
+    Refresh();
+    Update();
     m_prompt->SetFocus();
+    m_owner->CallAfter([this]() {
+        if (!IsShown()) Show(true);
+        layout_docked_panels();
+        Raise();
+        Refresh();
+    });
 }
 
 void AIAssistantPanel::show_modeling_agent()
 {
-    if (!IsShown()) {
-        Show();
-        layout_docked_panels();
-    }
+    show_assistant();
     m_tabs->SetSelection(0);
     m_canvas_status->SetLabel("● Preview: Bambu Studio slicer canvas (live)");
     m_prompt->SetHint("Describe the exact part, dimensions, loads, material and constraints...");
@@ -222,30 +228,36 @@ void AIAssistantPanel::show_modeling_agent()
 void AIAssistantPanel::show_terminal()
 {
     if (!m_terminal_panel) return;
-    if (m_terminal_panel->IsShown()) {
-        m_terminal_panel->Hide();
-        return;
-    }
-    m_terminal_panel->Show();
+    m_terminal_panel->Show(true);
     layout_docked_panels();
     m_terminal_panel->Raise();
+    m_terminal_panel->Refresh();
+    m_terminal_panel->Update();
     m_terminal_input->SetFocus();
+    m_owner->CallAfter([this]() {
+        if (!m_terminal_panel) return;
+        m_terminal_panel->Show(true);
+        layout_docked_panels();
+        m_terminal_panel->Raise();
+        m_terminal_panel->Refresh();
+    });
 }
 
 void AIAssistantPanel::layout_docked_panels()
 {
     if (!m_owner) return;
     const wxSize client = m_owner->GetClientSize();
+    const wxPoint origin = m_owner->ClientToScreen(wxPoint(0, 0));
     const int top = m_owner->topbar() ? m_owner->topbar()->GetSize().GetHeight() : 0;
     const int sidebar_width = std::clamp(client.GetWidth() / 3, 390, 520);
     const int terminal_height = std::clamp(client.GetHeight() / 3, 220, 340);
 
     if (IsShown())
-        SetSize(0, top, sidebar_width, std::max(120, client.GetHeight() - top));
+        SetSize(origin.x, origin.y + top, sidebar_width, std::max(120, client.GetHeight() - top));
 
     if (m_terminal_panel && m_terminal_panel->IsShown()) {
         const int left = IsShown() ? sidebar_width : 0;
-        m_terminal_panel->SetSize(left, client.GetHeight() - terminal_height,
+        m_terminal_panel->SetSize(origin.x + left, origin.y + client.GetHeight() - terminal_height,
                                   std::max(240, client.GetWidth() - left), terminal_height);
         m_terminal_panel->Raise();
     }
@@ -345,7 +357,8 @@ void AIAssistantPanel::build_ui()
     chat_sizer->Add(send, 0, wxEXPAND | wxALL, 12);
     chat->SetSizer(chat_sizer);
 
-    m_terminal_panel = new wxPanel(m_owner, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+    m_terminal_panel = new wxFrame(m_owner, wxID_ANY, "LayerMind Terminal", wxDefaultPosition, wxDefaultSize,
+                                   wxFRAME_TOOL_WINDOW | wxFRAME_NO_TASKBAR | wxBORDER_NONE);
     auto* terminal = m_terminal_panel;
     terminal->SetBackgroundColour(wxColour("#101820"));
     auto* terminal_sizer = new wxBoxSizer(wxVERTICAL);
@@ -546,6 +559,18 @@ void AIAssistantPanel::submit_prompt()
 {
     const wxString prompt = m_prompt->GetValue().Strip(wxString::both);
     if (prompt.empty()) return;
+    if (m_endpoint->GetValue().Strip(wxString::both).empty() || m_model->GetValue().Strip(wxString::both).empty()) {
+        m_tabs->SetSelection(1);
+        wxMessageBox("Choose an AI endpoint and model in Connections before sending a message.",
+                     "LayerMind connection required", wxOK | wxICON_INFORMATION, this);
+        return;
+    }
+    if (m_provider->GetSelection() != 1 && m_api_key->GetValue().empty()) {
+        m_tabs->SetSelection(1);
+        wxMessageBox("Enter the API key for the selected cloud provider. The key is kept in memory and must be entered again after restarting the app.",
+                     "LayerMind API key required", wxOK | wxICON_INFORMATION, this);
+        return;
+    }
     append_message("You", prompt); m_prompt->Clear();
     append_message("System", "Contacting " + m_provider->GetStringSelection() + "...");
     wxString modeling_prompt = prompt;

@@ -415,6 +415,11 @@ DPIFrame(NULL, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, BORDERLESS_FRAME_
             m_ai_assistant->layout_docked_panels();
         wxQueueEvent(wxGetApp().plater(), new SimpleEvent(EVT_NOTICE_CHILDE_SIZE_CHANGED));
         });
+    Bind(wxEVT_MOVE, [this](wxMoveEvent& event) {
+        if (m_ai_assistant)
+            m_ai_assistant->layout_docked_panels();
+        event.Skip();
+    });
 
     //BBS
     Bind(EVT_SELECT_TAB, [this](wxCommandEvent&evt) {
@@ -989,7 +994,7 @@ void MainFrame::toggle_ai_assistant()
 {
     if (m_ai_assistant == nullptr)
         m_ai_assistant = new AIAssistantPanel(this);
-    m_ai_assistant->toggle();
+    m_ai_assistant->show_assistant();
 }
 
 void MainFrame::show_ai_terminal()
