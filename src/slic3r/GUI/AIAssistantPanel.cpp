@@ -104,7 +104,10 @@ wxString join_strings(const std::vector<wxString>& values)
 void add_labelled(wxWindow* parent, wxSizer* sizer, const wxString& label, wxWindow* control)
 {
     auto* text = new wxStaticText(parent, wxID_ANY, label);
-    text->SetForegroundColour(wxColour("#AFC1CC"));
+    text->SetForegroundColour(wxColour("#475569"));
+    wxFont label_font = text->GetFont();
+    label_font.SetWeight(wxFONTWEIGHT_MEDIUM);
+    text->SetFont(label_font);
     sizer->Add(text, 0, wxLEFT | wxRIGHT | wxTOP, 12);
     sizer->Add(control, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 12);
 }
@@ -219,7 +222,7 @@ void AIAssistantPanel::show_modeling_agent()
 {
     show_assistant();
     m_tabs->SetSelection(0);
-    m_canvas_status->SetLabel("● Preview: Bambu Studio slicer canvas (live)");
+    m_canvas_status->SetLabel("Preview appears directly on the slicer canvas");
     m_prompt->SetHint("Describe the exact part, dimensions, loads, material and constraints...");
     Raise();
     m_prompt->SetFocus();
@@ -266,55 +269,56 @@ void AIAssistantPanel::layout_docked_panels()
 void AIAssistantPanel::style_button(wxButton* button, bool primary)
 {
     button->SetMinSize(wxSize(-1, 40));
-    button->SetBackgroundColour(wxColour(primary ? "#34D399" : "#253744"));
-    button->SetForegroundColour(wxColour(primary ? "#071C17" : "#E7F0F5"));
+    button->SetBackgroundColour(wxColour(primary ? "#00AE42" : "#F1F5F9"));
+    button->SetForegroundColour(wxColour(primary ? "#FFFFFF" : "#1E293B"));
     wxFont font = button->GetFont(); font.SetWeight(wxFONTWEIGHT_BOLD); button->SetFont(font);
 }
 
 void AIAssistantPanel::build_ui()
 {
-    SetBackgroundColour(wxColour("#0D171E"));
+    SetBackgroundColour(wxColour("#FFFFFF"));
     auto* root = new wxBoxSizer(wxVERTICAL);
 
     auto* header = new wxPanel(this);
-    header->SetBackgroundColour(wxColour("#0A1218"));
+    header->SetBackgroundColour(wxColour("#FFFFFF"));
     auto* header_sizer = new wxBoxSizer(wxHORIZONTAL);
     auto* logo = new wxStaticBitmap(header, wxID_ANY, create_scaled_bitmap("BambuStudioAI", header, 28));
     auto* brand = new wxBoxSizer(wxVERTICAL);
     auto* title = new wxStaticText(header, wxID_ANY, "LayerMind 3D");
     wxFont title_font = title->GetFont(); title_font.SetPointSize(17); title_font.SetWeight(wxFONTWEIGHT_BOLD);
-    title->SetFont(title_font); title->SetForegroundColour(*wxWHITE);
-    auto* subtitle = new wxStaticText(header, wxID_ANY, "Multi-model CAD copilot inside the slicer");
-    subtitle->SetForegroundColour(wxColour("#7EE2C2"));
-    m_provider_status = new wxStaticText(header, wxID_ANY, "● Checking AI provider...");
-    m_provider_status->SetForegroundColour(wxColour("#F5C451"));
-    auto* close_ai = new wxButton(header, wxID_ANY, "×", wxDefaultPosition, wxSize(34, 32), wxBORDER_NONE);
-    close_ai->SetBackgroundColour(wxColour("#0A1218"));
-    close_ai->SetForegroundColour(*wxWHITE);
+    title->SetFont(title_font); title->SetForegroundColour(wxColour("#0F172A"));
+    auto* subtitle = new wxStaticText(header, wxID_ANY, "AI design assistant");
+    subtitle->SetForegroundColour(wxColour("#64748B"));
+    m_provider_status = new wxStaticText(header, wxID_ANY, "Checking connection...");
+    m_provider_status->SetForegroundColour(wxColour("#B45309"));
+    auto* close_ai = new wxButton(header, wxID_ANY, "X", wxDefaultPosition, wxSize(34, 32), wxBORDER_NONE);
+    close_ai->SetBackgroundColour(wxColour("#FFFFFF"));
+    close_ai->SetForegroundColour(wxColour("#475569"));
     close_ai->SetToolTip("Close AI panel");
-    brand->Add(title); brand->Add(subtitle, 0, wxTOP, 2);
+    brand->Add(title);
+    brand->Add(subtitle, 0, wxTOP, 2);
+    brand->Add(m_provider_status, 0, wxTOP, 5);
     header_sizer->Add(logo, 0, wxALIGN_CENTER_VERTICAL | wxALL, 14);
     header_sizer->Add(brand, 1, wxALIGN_CENTER_VERTICAL | wxTOP | wxBOTTOM, 12);
-    header_sizer->Add(m_provider_status, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
     header_sizer->Add(close_ai, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
     header->SetSizer(header_sizer);
     root->Add(header, 0, wxEXPAND);
 
     m_tabs = new wxNotebook(this, wxID_ANY);
-    m_tabs->SetBackgroundColour(wxColour("#0D171E"));
+    m_tabs->SetBackgroundColour(wxColour("#FFFFFF"));
 
     auto* chat = new wxPanel(m_tabs);
-    chat->SetBackgroundColour(wxColour("#0D171E"));
+    chat->SetBackgroundColour(wxColour("#FFFFFF"));
     auto* chat_sizer = new wxBoxSizer(wxVERTICAL);
     auto* modeling_bar = new wxPanel(chat);
-    modeling_bar->SetBackgroundColour(wxColour("#132A29"));
+    modeling_bar->SetBackgroundColour(wxColour("#F8FAFC"));
     auto* modeling_sizer = new wxBoxSizer(wxVERTICAL);
-    auto* modeling_title = new wxStaticText(modeling_bar, wxID_ANY, "MODELING WORKSPACE   •   Ctrl+Shift+1");
-    modeling_title->SetForegroundColour(wxColour("#69E6BE"));
+    auto* modeling_title = new wxStaticText(modeling_bar, wxID_ANY, "3D modeling  |  Ctrl+Shift+1");
+    modeling_title->SetForegroundColour(wxColour("#0F172A"));
     wxFont modeling_font = modeling_title->GetFont(); modeling_font.SetWeight(wxFONTWEIGHT_BOLD);
     modeling_title->SetFont(modeling_font);
-    m_canvas_status = new wxStaticText(modeling_bar, wxID_ANY, "● Preview: Bambu Studio slicer canvas (live)");
-    m_canvas_status->SetForegroundColour(wxColour("#B7C8D4"));
+    m_canvas_status = new wxStaticText(modeling_bar, wxID_ANY, "Preview appears directly on the slicer canvas");
+    m_canvas_status->SetForegroundColour(wxColour("#64748B"));
     m_modeling_target = new wxChoice(modeling_bar, wxID_ANY);
     m_modeling_target->Append("Bambu Studio native generator");
     m_modeling_target->Append("Fusion 360 via MCP");
@@ -328,17 +332,17 @@ void AIAssistantPanel::build_ui()
     m_transcript = new wxTextCtrl(chat, wxID_ANY,
         "LayerMind 3D is ready. Describe the object; I will ask for missing dimensions before modeling.\n",
         wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
-    m_transcript->SetBackgroundColour(wxColour("#111E27"));
-    m_transcript->SetForegroundColour(wxColour("#E8F1F5"));
+    m_transcript->SetBackgroundColour(wxColour("#FFFFFF"));
+    m_transcript->SetForegroundColour(wxColour("#1E293B"));
     m_attachments = new wxListBox(chat, wxID_ANY, wxDefaultPosition, wxSize(-1, 78));
-    m_attachments->SetBackgroundColour(wxColour("#111E27"));
-    m_attachments->SetForegroundColour(wxColour("#BFD0DA"));
+    m_attachments->SetBackgroundColour(wxColour("#F8FAFC"));
+    m_attachments->SetForegroundColour(wxColour("#334155"));
     auto* attach = new wxButton(chat, wxID_ANY, "+  Attach files");
     m_prompt = new wxTextCtrl(chat, wxID_ANY, {}, wxDefaultPosition, wxSize(-1, 90), wxTE_MULTILINE);
-    m_prompt->SetBackgroundColour(wxColour("#162630"));
-    m_prompt->SetForegroundColour(wxColour("#FFFFFF"));
+    m_prompt->SetBackgroundColour(wxColour("#FFFFFF"));
+    m_prompt->SetForegroundColour(wxColour("#0F172A"));
     m_prompt->SetHint("Describe a model or ask the AI to change slicer settings...");
-    auto* send = new wxButton(chat, wxID_ANY, "Send to AI  →");
+    auto* send = new wxButton(chat, wxID_ANY, "Send");
     style_button(attach); style_button(send, true);
     auto* quick_row = new wxBoxSizer(wxHORIZONTAL);
     auto* quick_design = new wxButton(chat, wxID_ANY, "New part");
@@ -360,14 +364,14 @@ void AIAssistantPanel::build_ui()
     m_terminal_panel = new wxFrame(m_owner, wxID_ANY, "LayerMind Terminal", wxDefaultPosition, wxDefaultSize,
                                    wxFRAME_TOOL_WINDOW | wxFRAME_NO_TASKBAR | wxBORDER_NONE);
     auto* terminal = m_terminal_panel;
-    terminal->SetBackgroundColour(wxColour("#101820"));
+    terminal->SetBackgroundColour(wxColour("#FFFFFF"));
     auto* terminal_sizer = new wxBoxSizer(wxVERTICAL);
     auto* terminal_header = new wxBoxSizer(wxHORIZONTAL);
-    auto* terminal_title = new wxStaticText(terminal, wxID_ANY, "TERMINAL   •   Bambu AI   •   Ctrl+Shift+A");
-    terminal_title->SetForegroundColour(wxColour("#67E8C1"));
-    auto* close_terminal = new wxButton(terminal, wxID_ANY, "×", wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
-    close_terminal->SetBackgroundColour(wxColour("#101820"));
-    close_terminal->SetForegroundColour(*wxWHITE);
+    auto* terminal_title = new wxStaticText(terminal, wxID_ANY, "Terminal  |  Ctrl+Shift+A");
+    terminal_title->SetForegroundColour(wxColour("#0F172A"));
+    auto* close_terminal = new wxButton(terminal, wxID_ANY, "X", wxDefaultPosition, wxSize(34, 28), wxBORDER_NONE);
+    close_terminal->SetBackgroundColour(wxColour("#FFFFFF"));
+    close_terminal->SetForegroundColour(wxColour("#475569"));
     wxFont mono = wxFontInfo(10).Family(wxFONTFAMILY_TELETYPE);
     terminal_title->SetFont(mono.Bold());
     terminal_header->Add(terminal_title, 1, wxALIGN_CENTER_VERTICAL);
@@ -376,14 +380,14 @@ void AIAssistantPanel::build_ui()
         "Bambu AI Terminal v1\nType 'help' to see safe commands. Native shell commands are intentionally blocked.\n",
         wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
     m_terminal_output->SetFont(mono);
-    m_terminal_output->SetBackgroundColour(wxColour("#0B1117"));
-    m_terminal_output->SetForegroundColour(wxColour("#D7FBEF"));
+    m_terminal_output->SetBackgroundColour(wxColour("#F8FAFC"));
+    m_terminal_output->SetForegroundColour(wxColour("#1E293B"));
     auto* command_row = new wxBoxSizer(wxHORIZONTAL);
     auto* prompt_mark = new wxStaticText(terminal, wxID_ANY, ">");
-    prompt_mark->SetFont(mono.Bold()); prompt_mark->SetForegroundColour(wxColour("#21C98B"));
+    prompt_mark->SetFont(mono.Bold()); prompt_mark->SetForegroundColour(wxColour("#00AE42"));
     m_terminal_input = new wxTextCtrl(terminal, wxID_ANY, {}, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-    m_terminal_input->SetFont(mono); m_terminal_input->SetBackgroundColour(wxColour("#17232D"));
-    m_terminal_input->SetForegroundColour(*wxWHITE);
+    m_terminal_input->SetFont(mono); m_terminal_input->SetBackgroundColour(wxColour("#FFFFFF"));
+    m_terminal_input->SetForegroundColour(wxColour("#0F172A"));
     m_terminal_input->SetHint("model ai Create a red laptop stand...");
     auto* run = new wxButton(terminal, wxID_ANY, "Run"); style_button(run, true);
     command_row->Add(prompt_mark, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 8);
@@ -395,14 +399,14 @@ void AIAssistantPanel::build_ui()
     terminal->SetSizer(terminal_sizer);
 
     auto* settings = new wxScrolledWindow(m_tabs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxVSCROLL);
-    settings->SetBackgroundColour(wxColour("#0D171E"));
+    settings->SetBackgroundColour(wxColour("#FFFFFF"));
     settings->SetScrollRate(0, 12);
     auto* settings_sizer = new wxBoxSizer(wxVERTICAL);
     m_provider = new wxChoice(settings, wxID_ANY);
     m_provider->Append("NVIDIA API");
-    m_provider->Append("Ollama — local");
-    m_provider->Append("OpenAI-compatible API — any vendor");
-    m_provider->Append("Local OpenAI-compatible — Bionic/other");
+    m_provider->Append("Ollama - local");
+    m_provider->Append("OpenAI-compatible API - any vendor");
+    m_provider->Append("Local OpenAI-compatible - Bionic/other");
     m_endpoint = new wxTextCtrl(settings, wxID_ANY);
     m_model = new wxTextCtrl(settings, wxID_ANY);
     m_api_key = new wxTextCtrl(settings, wxID_ANY, {}, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
@@ -434,7 +438,7 @@ void AIAssistantPanel::build_ui()
     settings->SetSizer(settings_sizer);
 
     auto* sharing = new wxPanel(m_tabs);
-    sharing->SetBackgroundColour(wxColour("#0D171E"));
+    sharing->SetBackgroundColour(wxColour("#FFFFFF"));
     auto* sharing_sizer = new wxBoxSizer(wxVERTICAL);
     m_share_email = new wxTextCtrl(sharing, wxID_ANY);
     m_share_role = new wxChoice(sharing, wxID_ANY);
@@ -551,7 +555,7 @@ void AIAssistantPanel::add_share_rule()
     if (!email.Contains("@")) {
         wxMessageBox("Enter a valid email address.", "Sharing", wxOK | wxICON_WARNING, this); return;
     }
-    m_shares->Append(email + " — " + m_share_role->GetStringSelection());
+    m_shares->Append(email + " - " + m_share_role->GetStringSelection());
     m_share_email->Clear();
 }
 
@@ -581,7 +585,7 @@ void AIAssistantPanel::submit_prompt()
 
 void AIAssistantPanel::detect_local_ollama()
 {
-    m_provider_status->SetLabel("● Checking Ollama...");
+    m_provider_status->SetLabel("Checking Ollama...");
     m_provider_status->SetForegroundColour(wxColour("#F5C451"));
     std::thread([this]() {
         std::vector<wxString> models;
@@ -630,8 +634,8 @@ void AIAssistantPanel::detect_local_ollama()
                 const wxString current = m_model->GetValue();
                 const bool installed = std::find(models.begin(), models.end(), current) != models.end();
                 if (!installed) m_model->SetValue(models.front());
-                m_provider_status->SetLabel(wxString(compatible ? "● Local compatible: " : "● Ollama: ") + m_model->GetValue());
-                m_provider_status->SetForegroundColour(wxColour("#67E8C1"));
+                m_provider_status->SetLabel(wxString(compatible ? "Local AI: " : "Ollama: ") + m_model->GetValue());
+                m_provider_status->SetForegroundColour(wxColour("#087F5B"));
                 append_message("System", wxString(compatible ? "Local OpenAI-compatible AI connected. Models: " : "Ollama connected. Installed models: ") + join_strings(models) + ".");
             } else {
                 if (m_provider->GetSelection() == 1) {
@@ -639,7 +643,7 @@ void AIAssistantPanel::detect_local_ollama()
                     m_endpoint->SetValue("https://integrate.api.nvidia.com/v1");
                     m_model->SetValue("nvidia/nemotron-3-super-120b-a12b");
                 }
-                m_provider_status->SetLabel("● NVIDIA / Ollama unavailable");
+                m_provider_status->SetLabel("AI connection required");
                 m_provider_status->SetForegroundColour(wxColour("#F5C451"));
                 append_message("System", failure.empty() ? "Ollama is running but has no installed models. Pull a model first." : "Ollama was not found locally.");
             }
