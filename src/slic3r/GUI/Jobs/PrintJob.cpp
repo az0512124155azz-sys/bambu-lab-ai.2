@@ -704,7 +704,6 @@ void PrintJob::process()
 
     auto should_stop_without_fallback = [](int ret) {
         return ret == BAMBU_NETWORK_ERR_CANCELED
-            || ret == BAMBU_NETWORK_SIGNED_ERROR
             || ret == BAMBU_NETWORK_ERR_PRINT_WR_FILE_NOT_EXIST
             || ret == BAMBU_NETWORK_ERR_PRINT_SP_FILE_NOT_EXIST
             || ret == BAMBU_NETWORK_ERR_PRINT_WR_FILE_OVER_SIZE
@@ -815,7 +814,7 @@ void PrintJob::process()
                             attempt_route = SendAttemptRoute::LanDirect;
                             curr_percent = 85;
                             this->update_status(curr_percent, get_route_status_msg());
-                            BOOST_LOG_TRIVIAL(info) << "print_job: try lan direct fallback after cloud failure";
+                            BOOST_LOG_TRIVIAL(info) << "print_job: try authorized lan direct fallback after cloud failure, cloud_result=" << result;
                             result = m_agent->start_local_print(local_params, update_fn, cancel_fn);
                             if (result < 0) {
                                 BOOST_LOG_TRIVIAL(warning) << "print_job: lan direct fallback failed, ret=" << result;
